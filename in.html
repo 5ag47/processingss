@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+<script>
+let click = 0, i = 0, oi = 0, slclick = 0;
+let x, y, r = 400, u, ssc = 0, sl;
+let mX = [], mY = [], oX = [], oY = [], mc = [], omc = [], mclick = [], omclick = [], msr = [], omsr = [];
+let col = Array.from({ length: 5 }, () => Array(1000).fill(0));
+let ocol = Array.from({ length: 5 }, () => Array(1000).fill(0));
+let mXX = [], mYY = [], omXX = [], omYY = [], o = [];
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    frameRate(60);
+    background(0);
+    x = width / 2;
+    y = height / 2;
+    sl = width - 150;
+}
+
+function draw() {
+    // 슬라이더 조정에 따른 반지름 및 이동 효과
+    u = r;
+    r = 400 + ((width - sl) * 5);  // 화면 크기에 맞게 반지름 조정
+    x += (u - r) / 2;
+
+    // 화면의 일부를 어둡게 하는 효과
+    fill(0, 20);
+    rect(0, 0, width, height);
+
+    // 주요 원 그리기
+    noStroke();
+    fill(255, 150);
+    ellipse(x, y, r, r);
+
+    // 내부 클릭 배열 요소들 그리기
+    for (let j = 0; j < i; j++) {
+        fill(0, mc[j]);
+        ellipse(mXX[j], mYY[j], 5, 5);
+        if (mclick[j] === 1) {
+            mXX[j] = mX[j];
+            mYY[j] = mY[j];
+            if (mc[j] < 100) {
+                mc[j] = lerp(mc[j], 150, 0.1);
+                fill(col[1][j], col[2][j], col[3][j], mc[j]);
+                ellipse(mX[j], mY[j], msr[j], msr[j]);
+            } else {
+                mclick[j] = 2;
+                msr[j] = 3 * (r / 2 - dist(x, y, mX[j], mY[j]));
+            }
+        } else if (mclick[j] === 2) {
+            mXX[j] = mX[j];
+            mYY[j] = mY[j];
+            msr[j] = lerp(msr[j], (r / 2 - dist(x, y, mX[j], mY[j])), 0.01);
+            fill(col[1][j], col[2][j], col[3][j], mc[j]);
+            ellipse(mX[j], mY[j], msr[j], msr[j]);
+            if (msr[j] < 2 * (r / 2 - dist(x, y, mX[j], mY[j]))) {
+                mclick[j] = 3;
+            }
+        } else if (mclick[j] === 3) {
+            fill(0, 100, 255, mc[j]);
+            mc[j] = lerp(mc[j], 0, 0.06);
+            mX[j] = lerp(mX[j], x, 0.01);
+            mY[j] = lerp(mY[j], y, 0.01);
+            msr[j] = lerp(msr[j], r, 0.01);
+            ellipse(mX[j], mY[j], msr[j], msr[j]);
+        }
+    }
+
+    // 외부 클릭 배열 요소들 그리기
+    for (let j = 0; j < oi; j++) {
+        // 원과 교집합이 없는지 검사 (ball 반지름 고려)
+        let distance = dist(oX[j], oY[j], x, y);
+        if (distance > (r / 2 + omsr[j] / 2)) {
+            // 빨간색으로 변하고 진동 효과 추가
+            fill(255, 0, 0, omc[j]*2);
+            oX[j] += random(-7, 7); // 진동 효과
+            oY[j] += random(-7, 7);
+        } else {
+            fill(ocol[1][j], ocol[2][j], ocol[3][j], omc[j]);
+            omsr[j] = lerp(omsr[j], 20, 0.01); // 원 안에 있을 때 크기
+        }
+        ellipse(oX[j], oY[j], omsr[j], omsr[j]);
+        
+        // 투명도 점진적으로 줄이기
+        omc[j] = lerp(omc[j], 0, 0.05);
+    }
+
+    // 슬라이더 조절 부분 (막대와 원으로 표현)
+    strokeWeight(10);
+    stroke(100);
+    line(width - 200, height - 50, width - 50, height - 50);
+    noStroke();
+    fill(255);
+    ellipse(sl, height - 50, 20, 20);
+}
+
+function mouseReleased() {
+    slclick = 0;
+}
+
+function mouseDragged() {
+    // 슬라이더 클릭 후 드래그를 통한 위치 조절
+    if (slclick === 1 && mouseX < width - 50 && mouseX > width - 200) {
+        sl = mouseX;
+    }
+}
+
+function mousePressed() {
+    // 슬라이더 핸들 클릭 감지
+    if (abs(sl - mouseX) < 20 && abs(height - 50 - mouseY) < 20) {
+        slclick = 1;
+    }
+}
+
+function mouseClicked() {
+    // 원 내부 클릭 시 새 요소 추가
+    if (dist(mouseX, mouseY, x, y) < r / 2) {
+        if (i < 1000) {
+            mclick[i] = 1;
+            mX[i] = mouseX;
+            mY[i] = mouseY;
+            mc[i] = 0;
+            col[1][i] = random(50, 150);
+            col[2][i] = random(0, 200);
+            col[3][i] = random(30, 150);
+            msr[i] = 3 * (r / 2 - dist(x, y, mouseX, mouseY));
+            i++;
+        }
+    } else {
+        // 원 외부 클릭 시 다른 요소 추가
+        if (oi < 1000) {
+            omclick[oi] = 1;
+            oX[oi] = mouseX;
+            oY[oi] = mouseY;
+            omc[oi] = 255;
+            ocol[1][oi] = random(50, 200);
+            ocol[2][oi] = random(50, 255);
+            ocol[3][oi] = random(30, 200);
+            omsr[oi] = 3 * (dist(x, y, mouseX, mouseY)-r/2);  // 외부 요소 초기 크기
+            oi++;
+        }
+    }
+}
+</script>
+</body>
+</html>

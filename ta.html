@@ -1,0 +1,100 @@
+<!-- 타원.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+<script>
+let clicked, po;
+
+function setup() {
+    createCanvas(1000, 800); // 캔버스 크기
+    po = [
+        createVector(300, height / 4), // 장축 조절점 (타원보다 훨씬 위)
+        createVector(300, height / 6) // 단축 조절점 (장축 조절점보다 더 위)
+    ];
+    clicked = [false, false];
+}
+
+function draw() {
+    let a = abs(po[0].x - width / 2); // 장축 반지름
+    let b = abs(po[1].x - width / 2); // 단축 반지름
+
+    background(255);
+    let cx = width / 2;
+    let cy = height / 2;
+    let k = 0.5522847498; // 베지어 곡선 상수
+
+    // 타원의 사분면 정의
+    let pts1 = [
+        createVector(cx - a, cy),
+        createVector(cx - a, cy - k * b),
+        createVector(cx - k * a, cy - b),
+        createVector(cx, cy - b)
+    ];
+
+    let pts2 = [
+        createVector(cx + a, cy),
+        createVector(cx + a, cy + k * b),
+        createVector(cx + k * a, cy + b),
+        createVector(cx, cy + b)
+    ];
+
+    let pts3 = [
+        createVector(cx - a, cy),
+        createVector(cx - a, cy + k * b),
+        createVector(cx - k * a, cy + b),
+        createVector(cx, cy + b)
+    ];
+
+    let pts4 = [
+        createVector(cx + a, cy),
+        createVector(cx + a, cy - k * b),
+        createVector(cx + k * a, cy - b),
+        createVector(cx, cy - b)
+    ];
+
+    // 타원 그리기
+    noFill();
+    stroke(0);
+    strokeWeight(2);
+    bezier(pts1[0].x, pts1[0].y, pts1[1].x, pts1[1].y, pts1[2].x, pts1[2].y, pts1[3].x, pts1[3].y);
+    bezier(pts2[0].x, pts2[0].y, pts2[1].x, pts2[1].y, pts2[2].x, pts2[2].y, pts2[3].x, pts2[3].y);
+    bezier(pts3[0].x, pts3[0].y, pts3[1].x, pts3[1].y, pts3[2].x, pts3[2].y, pts3[3].x, pts3[3].y);
+    bezier(pts4[0].x, pts4[0].y, pts4[1].x, pts4[1].y, pts4[2].x, pts4[2].y, pts4[3].x, pts4[3].y);
+
+    // 조절점 그리기
+    noStroke();
+    fill(255, 0, 0);
+    ellipse(po[0].x, po[0].y, 15, 15); // 장축 조절점
+    ellipse(po[1].x, po[1].y, 15, 15); // 단축 조절점
+}
+
+function mousePressed() {
+    for (let i = 0; i < po.length; i++) {
+        let d = dist(mouseX, mouseY, po[i].x, po[i].y);
+        if (d < 15) {
+            clicked[i] = true;
+            break;
+        }
+    }
+}
+
+function mouseDragged() {
+    for (let i = 0; i < po.length; i++) {
+        if (clicked[i]) {
+            // 조절점이 x축에서만 이동 가능하도록 제한
+            po[i].x = constrain(mouseX, 50, width - 50);
+        }
+    }
+}
+
+function mouseReleased() {
+    for (let i = 0; i < clicked.length; i++) {
+        clicked[i] = false;
+    }
+}
+</script>
+</body>
+</html>
